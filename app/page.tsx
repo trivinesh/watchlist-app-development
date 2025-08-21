@@ -7,6 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { NetflixNav } from "@/components/netflix-nav"
 import { SAMPLE_DATA, type WatchlistItem } from "@/lib/data"
+import { MoodSelector } from "@/components/mood-selector"
+import { getMoodSuggestions, MOOD_MAPPINGS } from "@/lib/mood-mapping"
+import { Mood } from "@/lib/mood-mapping"
 
 function HeroBanner({ item }: { item: WatchlistItem }) {
   return (
@@ -94,6 +97,7 @@ function ContentRow({ title, items }: { title: string; items: WatchlistItem[] })
 
 export default function NetflixClone() {
   const [items] = useState<WatchlistItem[]>(SAMPLE_DATA)
+  const [selectedMood, setSelectedMood] = useState<Mood | null>(null)
 
   const featuredItem = items.find((item) => item.featured) || items[0]
 
@@ -102,6 +106,10 @@ export default function NetflixClone() {
   const myList = items.filter((item) => item.status === "want-to-watch")
   const recentlyAdded = [...items].sort((a, b) => new Date(b.addedDate).getTime() - new Date(a.addedDate).getTime())
 
+  // Get mood-based suggestions
+  const moodSuggestions = selectedMood ? getMoodSuggestions(items, selectedMood) : []
+  const filteredItems = selectedMood ? moodSuggestions : items
+
   return (
     <div className="min-h-screen bg-black text-white">
       <NetflixNav />
@@ -109,6 +117,20 @@ export default function NetflixClone() {
       <HeroBanner item={featuredItem} />
 
       <div className="relative z-10 -mt-32 space-y-8">
+        <div className="px-4 md:px-12">
+          <MoodSelector 
+            selectedMood={selectedMood} 
+            onMoodChange={setSelectedMood} 
+          />
+        </div>
+
+        {selectedMood && moodSuggestions.length > 0 && (
+          <ContentRow 
+            title={`${MOOD_MAPPINGS.find(m => m.mood === selectedMood)?.title}`} 
+            items={moodSuggestions} 
+          />
+        )}
+
         {continueWatching.length > 0 && <ContentRow title="Continue Watching" items={continueWatching} />}
 
         <ContentRow title="Trending Now" items={trendingNow} />
@@ -117,9 +139,9 @@ export default function NetflixClone() {
 
         <ContentRow title="Recently Added" items={recentlyAdded} />
 
-        <ContentRow title="Movies" items={items.filter((item) => item.type === "movie")} />
+        <ContentRow title="Movies" items={filteredItems.filter((item) => item.type === "movie")} />
 
-        <ContentRow title="TV Shows" items={items.filter((item) => item.type === "tv-show")} />
+        <ContentRow title="TV Shows" items={filteredItems.filter((item) => item.type === "tv-show")} />
       </div>
 
       <div className="h-20"></div>

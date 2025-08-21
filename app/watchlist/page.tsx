@@ -1,15 +1,45 @@
-import { SAMPLE_DATA, getStatusDisplayName, getStatusDescription } from "@/lib/data"
+"use client"
+
+import { useState, useMemo } from "react"
 import Link from "next/link"
+import { SAMPLE_DATA, getStatusDisplayName, getStatusDescription, type WatchlistItem } from "@/lib/data"
+import { SortDropdown, type SortOption } from "@/components/sort-dropdown"
 
 export default function WatchlistPage() {
-  const watchlistItems = SAMPLE_DATA.filter((item) => item.status === "watchlist")
+  const [sortOption, setSortOption] = useState<SortOption>("release-date-newest")
+  
+  const watchlistItems = useMemo(() => {
+    const filtered = SAMPLE_DATA.filter((item) => item.status === "watchlist")
+    
+    return [...filtered].sort((a, b) => {
+      switch (sortOption) {
+        case "release-date-newest":
+          return new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime()
+        case "release-date-oldest":
+          return new Date(a.releaseDate).getTime() - new Date(b.releaseDate).getTime()
+        case "rating-highest":
+          return b.rating - a.rating
+        case "rating-lowest":
+          return a.rating - b.rating
+        case "personal-rating-highest":
+          return (b.personalRating || 0) - (a.personalRating || 0)
+        case "personal-rating-lowest":
+          return (a.personalRating || 0) - (b.personalRating || 0)
+        default:
+          return 0
+      }
+    })
+  }, [sortOption])
 
   return (
     <div className="min-h-screen bg-black text-white">
       <div className="pt-20 px-4 md:px-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">{getStatusDisplayName("watchlist")}</h1>
-          <p className="text-gray-400 text-lg">{getStatusDescription("watchlist")}</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold mb-2">{getStatusDisplayName("watchlist")}</h1>
+            <p className="text-gray-400 text-lg">{getStatusDescription("watchlist")}</p>
+          </div>
+          <SortDropdown onSortChange={setSortOption} currentSort={sortOption} />
         </div>
 
         {watchlistItems.length === 0 ? (
