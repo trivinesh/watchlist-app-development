@@ -1,26 +1,62 @@
-import { SAMPLE_DATA, getStatusDisplayName, getStatusDescription } from "@/lib/data"
+"use client"
+
+import { useState, useMemo } from "react"
 import Link from "next/link"
+import { Play, Info, Trash2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
+import { NetflixNav } from "@/components/netflix-nav"
+import { SAMPLE_DATA, getStatusDisplayName, getStatusDescription, type WatchlistItem } from "@/lib/data"
+import { SortDropdown, type SortOption } from "@/components/sort-dropdown"
 
 export default function WatchedPage() {
-  const watchedItems = SAMPLE_DATA.filter((item) => item.status === "watched")
+  const [items, setItems] = useState<WatchlistItem[]>(SAMPLE_DATA)
+  const [sortOption, setSortOption] = useState<SortOption>("release-date-newest")
+  
+  const watchedItems = useMemo(() => {
+    const filtered = items.filter((item) => item.status === "watched")
+    
+    return [...filtered].sort((a, b) => {
+      switch (sortOption) {
+        case "release-date-newest":
+          return new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime()
+        case "release-date-oldest":
+          return new Date(a.releaseDate).getTime() - new Date(b.releaseDate).getTime()
+        case "rating-highest":
+          return b.rating - a.rating
+        case "rating-lowest":
+          return a.rating - b.rating
+        case "personal-rating-highest":
+          return (b.personalRating || 0) - (a.personalRating || 0)
+        case "personal-rating-lowest":
+          return (a.personalRating || 0) - (b.personalRating || 0)
+        default:
+          return 0
+      }
+    })
+  }, [items, sortOption])
 
   return (
     <div className="min-h-screen bg-black text-white">
+      <NetflixNav />
+
       <div className="pt-20 px-4 md:px-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">{getStatusDisplayName("watched")}</h1>
-          <p className="text-gray-400 text-lg">{getStatusDescription("watched")}</p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold mb-2">{getStatusDisplayName("watched")}</h1>
+            <p className="text-gray-400 text-lg">{getStatusDescription("watched")}</p>
+          </div>
+          <SortDropdown onSortChange={setSortOption} currentSort={sortOption} />
         </div>
 
         {watchedItems.length === 0 ? (
           <div className="text-center py-20">
-            <h2 className="text-2xl font-semibold mb-4">You haven't watched anything yet</h2>
-            <p className="text-gray-400 mb-8">Start watching and track your viewing history!</p>
-            <Link
-              href="/search"
-              className="bg-red-600 hover:bg-red-700 px-8 py-3 rounded font-semibold transition-colors"
-            >
-              Browse Content
+            <h2 className="text-2xl font-semibold mb-4">Your watched list is empty</h2>
+            <p className="text-gray-400 mb-8">Add movies and shows you've completed watching!</p>
+            <Link href="/">
+              <Button size="lg" className="bg-primary hover:bg-primary/80">
+                Browse Content
+              </Button>
             </Link>
           </div>
         ) : (
@@ -35,7 +71,6 @@ export default function WatchedPage() {
                       className="w-full h-auto transition-transform duration-300 group-hover:scale-105"
                     />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300" />
-                    <div className="absolute top-2 right-2 bg-green-600 text-xs px-2 py-1 rounded">✓ WATCHED</div>
                   </div>
                 </Link>
                 <div className="mt-2">
@@ -43,10 +78,6 @@ export default function WatchedPage() {
                   <p className="text-gray-400 text-xs">
                     {item.genre} • {item.rating}/10
                   </p>
-                  {item.personalRating && (
-                    <p className="text-yellow-400 text-xs">Your rating: {item.personalRating}/10</p>
-                  )}
-                  {item.notes && <p className="text-gray-500 text-xs mt-1 truncate">{item.notes}</p>}
                 </div>
               </div>
             ))}

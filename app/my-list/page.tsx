@@ -1,16 +1,40 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import Link from "next/link"
 import { Play, Info, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { NetflixNav } from "@/components/netflix-nav"
 import { SAMPLE_DATA, type WatchlistItem } from "@/lib/data"
+import { SortDropdown, type SortOption } from "@/components/sort-dropdown"
 
 export default function MyListPage() {
   const [items, setItems] = useState<WatchlistItem[]>(SAMPLE_DATA)
-  const myListItems = items.filter((item) => item.status === "want-to-watch")
+  const [sortOption, setSortOption] = useState<SortOption>("release-date-newest")
+  
+  const myListItems = useMemo(() => {
+    const filtered = items.filter((item) => item.status === "want-to-watch")
+    
+    return [...filtered].sort((a, b) => {
+      switch (sortOption) {
+        case "release-date-newest":
+          return new Date(b.releaseDate).getTime() - new Date(a.releaseDate).getTime()
+        case "release-date-oldest":
+          return new Date(a.releaseDate).getTime() - new Date(b.releaseDate).getTime()
+        case "rating-highest":
+          return b.rating - a.rating
+        case "rating-lowest":
+          return a.rating - b.rating
+        case "personal-rating-highest":
+          return (b.personalRating || 0) - (a.personalRating || 0)
+        case "personal-rating-lowest":
+          return (a.personalRating || 0) - (b.personalRating || 0)
+        default:
+          return 0
+      }
+    })
+  }, [items, sortOption])
 
   const removeFromList = (itemId: string) => {
     setItems(items.map((item) => (item.id === itemId ? { ...item, status: "watched" as const } : item)))
@@ -22,7 +46,10 @@ export default function MyListPage() {
 
       <div className="pt-24 pb-12">
         <div className="max-w-7xl mx-auto px-4">
-          <h1 className="text-4xl font-bold mb-8">My List</h1>
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-4xl font-bold">My List</h1>
+            <SortDropdown onSortChange={setSortOption} currentSort={sortOption} />
+          </div>
 
           {myListItems.length === 0 ? (
             <div className="text-center py-20">
