@@ -1,7 +1,7 @@
 "use client"
 
 import Link from "next/link"
-import { Search } from "lucide-react"
+import { Search, Trophy } from "lucide-react"
 
 export function NetflixNav() {
   return (
@@ -20,6 +20,10 @@ export function NetflixNav() {
             </Link>
             <Link href="/movies" className="text-white hover:text-gray-300 transition-colors">
               Movies
+            </Link>
+            <Link href="/gamification" className="text-white hover:text-gray-300 transition-colors">
+              <Trophy className="h-4 w-4 inline mr-1" />
+              Gamification
             </Link>
             <Link href="/wishlist" className="text-white hover:text-gray-300 transition-colors">
               Wishlist
